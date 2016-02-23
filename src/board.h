@@ -3,10 +3,19 @@
 #include <time.h>
 #include <string.h>
 
+#ifndef ALIVE_TO_DEAD 
+#define ALIVE_TO_DEAD 3
+#endif
+#ifndef DEAD_TO_ALIVE
+#define DEAD_TO_ALIVE 4
+#endif
+
+
 typedef struct {
 	int size_x;
 	int size_y;
 	int initial_cells;
+	int current_cells;
 	int** board;
 
 }Board;

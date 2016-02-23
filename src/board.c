@@ -1,6 +1,5 @@
 #include "board.h"
 
-
 int** allocate_empty_board(int x, int y) {
 	
 	int** board = calloc(x, sizeof(int *));
@@ -15,6 +14,7 @@ Board* initialize_board_struct(int x, int y, int initial_cells) {
 	board_struct->size_x = x;
 	board_struct->size_y = y;
 	board_struct->initial_cells = initial_cells;
+	board_struct->current_cells = initial_cells;
 	board_struct->board = allocate_empty_board(x,y);
 	return board_struct;
 }
@@ -41,24 +41,26 @@ void update_board_state(Board *board_struct) {
 		for (int c = 0; c < board_struct->size_y; c++) {
 			// printf("-------- (%d,%d) -------- \n", r, c);
 			int num_neighbor_cells = get_num_neighbors(r, c, board_struct);
-			// printf("Number of Neighbors for %d,%d = %d\n", r,c,num_neighbor_cells);
-			if (num_neighbor_cells <3) {
+			// 1. Die if fewer than 2 live neighbors.
+			// 2. Die if more than 3 live neighbors.
+			if (num_neighbor_cells < 2 || num_neighbor_cells > 3) {
 				
 				if (board[r][c] == 1) {
-					board[r][c] = 3;
+					board[r][c] = ALIVE_TO_DEAD;
 				}
 				else if (board[r][c] == 0) {
 					board[r][c] = 0;
 				}
 			}
-			else {
-				if (board[r][c] == 0) {
-					board[r][c] = 4;
-				}
-				else if (board[r][c] == 1) {
-					board[r][c] = 1;
-				}	
+			// 3. Continue to Live if 2 or 3 neighbors.
+			else if ((board[r][c] == 1)&&(num_neighbor_cells == 2 || num_neighbor_cells == 3)) {
+				continue;	
 			}
+			// 4. Revive dead cell if exactly 3 neighbors
+			else if (board[r][c] == 0 && num_neighbor_cells == 3) {
+				board[r][c] = DEAD_TO_ALIVE;
+			}
+
 			// printf("---------------------------\n");
 				
 		}
@@ -69,11 +71,13 @@ void update_board_state_final(Board *board_struct) {
 	int** board = board_struct->board;
 	for (int r = 0; r < board_struct->size_x; r++) {
 		for (int c = 0; c < board_struct->size_y; c++) {
-			if (board[r][c] == 3) {
+			if (board[r][c] == ALIVE_TO_DEAD) {
 				board[r][c] = 0;
+				board_struct->current_cells -= 1;
 			}
-			else if (board[r][c] == 4) {
+			else if (board[r][c] == DEAD_TO_ALIVE) {
 				board[r][c] = 1;
+				board_struct->current_cells += 1;
 			}
 		}
 	}
@@ -112,28 +116,33 @@ int get_num_neighbors(int r, int c, Board *board_struct) {
 	return num_neighbor_cells;
 }
 
-void print_board(Board *board) {
-	for(int i = 0; i < board->size_x; i++) {
+void print_board(Board *board_struct) {
+	for(int i = 0; i < board_struct->size_x; i++) {
 		printf("\t");
-		for (int j = 0; j < board->size_y; j++) {
-			printf("%d",board->board[i][j]);
-			if (j == board->size_y-1) {
+		for (int j = 0; j < board_struct->size_y; j++) {
+			if (board_struct->board[i][j] == 1) {
+				printf("O");
+			}
+			else {
+				printf("_");
+			}
+			if (j == board_struct->size_y-1) {
 				printf("\n");
 			}
 		}
 	}
 }
 
-void free_board(Board *board) {
-	if (board != NULL) {
-		for (int row = 0; row < board->size_y; row++) {
-			if (board->board[row] != NULL)
-				free(board->board[row]);
+void free_board(Board *board_struct) {
+	if (board_struct != NULL) {
+		for (int row = 0; row < board_struct->size_y; row++) {
+			if (board_struct->board[row] != NULL)
+				free(board_struct->board[row]);
 		}
-		if (board->board != NULL) {
-			free(board->board);	
+		if (board_struct->board != NULL) {
+			free(board_struct->board);	
 		}
 		
-		free(board);
+		free(board_struct);
 	}
 }

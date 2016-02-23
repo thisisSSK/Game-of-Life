@@ -23,14 +23,13 @@ int main(int argc, char** argv) {
 	printf("------ Initial Board ------\n");
 	print_board(board_struct);
 	printf("------ ------------- ------\n");
-
-	for (int i = 0; i < 5; i ++) {
+	int i = 0;
+	while (board_struct->current_cells > 0 && i < 50000) {
 		printf("------ Step %d ------\n", i + 1);
 		update_board_state(board_struct);
 		print_board(board_struct);
+		i++;
 	}
-
-
 	free_board(board_struct);
 
 }
